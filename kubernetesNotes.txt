@@ -1,0 +1,425 @@
+Kubernates: It is a container orchestration technology used to orchestrate the deployment and management of hundreds
+and thousands of containers in a clustered environment.
+
+Node / minions: A node is a machine, physical or virtual on which Kubernetes is installed. A node is a worker machine
+and that is where containers will be launched by Kubernetes.
+
+what if the node on which your application is running fails?
+ans : Well obviously our application goes down. So you need to have more than one nodes (cluster)
+
+Cluster: A Cluster is a set of nodes grouped together.This way even if one node fails the application still accessible from the other nodes.
+
+Master: The Master is another node with Kubernetes installed in it and is configured as a Master. The master watches over the nodes in the cluster and is responsible for the actual orchestration of
+containers on the worker nodes. [ is responsible for managing the cluster, node etc. When a node fails how do you move the workload of the failed node to another worker node ]
+
+**************
+Components
+**************
+
+1. API server: The API server acts as the front end for Kubernetes. The users, management devices, command line interfaces, all talk
+to the API server to interact with Kubernetes cluster.
+
+2.  etcd store:  etcd is a distributed reliable key value store used by Kubernetes to store all data used to manage the cluster.
+[meaning : When you have multiple nodes and multiple Masters in your cluster, etcd stores all that information on all the nodes in the cluster
+in a distributed manner. etcd is responsible for implementing locks within the cluster to ensure that there are no conflicts between the Masters]
+
+3. Scheduler : The Scheduler is responsible for distributing work or containers across multiple nodes. It looks for newly created containers and assigns them to nodes.
+
+4. Controller :  The controllers are the brain behind orchestration. They are responsible for noticing and responding when nodes, containers or end points goes down. 
+The controllers make decisions to bring up new containers in such cases. 
+
+5   Container Runtime : The Container Runtime is the underlying software that is used to run containers. In our case it happens to be Docker.
+
+6. kubelet :  Kubelet is the agent that runs on each node in the cluster. The agent is responsible for making sure that the containers are running on the nodes as expected.
+
+********************
+Kubernates Pods
+********************
+
+Kubernetes does not deploy containers directly on the worker nodes. The containers are encapsulated into a Kubernetes object known as pods.
+A pod is a single instance of an application. A pod is the smallest object that you can create in Kubernetes.
+  
+-pods usually have a 1 to 1 relationship with containers running your application to scale up, you create new pods and to scale down you delete existing pods.
+
+Scenario: 
+---------------------------------------------
+Let's assume we were developing a process or a script to deploy our application on a Docker host.
+Then we would first simply deploy our application using a simple Docker run Python app command[docker run python-app], and
+the application runs fine and our users are able to access it. When the load increases, we deploy more 
+instances of our application by running the Docker run commands many more times.
+
+This works fine and we are all happy now.
+
+Sometime in the future our application is further developed, undergoes architectural changes and grows
+and gets complex.
+
+We now have a new helper container that helps our web application by processing or fetching data from
+elsewhere [docker run helper -link app1, docker run helper -link app2 etc]. These helper containers maintain 
+a 1 to 1 relationship with our application container and thus needs to communicate with the application containers directly and access data from those containers.
+
+For this, we need to maintain a map of what app and helper containers are connected to each other.
+We would need to establish network connectivity between these containers ourselves using links and custom
+networks. We would need to create shareable volumes and share it among the containers. We would need to 
+maintain a map of that as well. And most importantly, we would need to monitor the state of the application 
+container. And when it dies, manually kill the helper container as well as it's no longer required.
+When a new container is deployed, we would need to deploy the new helper container as well with pods.
+Kubernetes does all of this for us automatically.
+
+My understanding:  
+1. create a cluster
+2. create a node inside cluster
+3. create a pod inside node
+
+When the cluster is started a default node will be created
+__________________________________________________________________________
+
+commands
+__________________________________________________________________________
+To start a cluster : minikube start
+
+To check status of a cluster : minikbe status
+
+To get the nodes running inside a cluster : kubectl get nodes
+
+Create a sample deployment and expose it on port 8080:
+	- kubectl create deployment hello-minikube --image=kicbase/echo-server:1.0
+	- kubectl expose deployment hello-minikube --type=NodePort --port=8080
+	
+It may take a moment, but your deployment will soon show up when you run:
+	- kubectl get services hello-minikube
+	
+To get the url of expose service
+	- minikube service hello-minikube --url
+	
+The easiest way to access this service is to let minikube launch a web browser for you:
+	- minikube service hello-minikube
+	
+Alternatively, use kubectl to forward the port:
+	- kubectl port-forward service/hello-minikube 7080:8080
+	
+**********Manage your cluster******************
+
+Pause Kubernetes without impacting deployed applications:
+	- minikube pause
+
+Unpause a paused instance:
+	- minikube unpause
+
+Halt the cluster: minikube stop
+
+Change the default memory limit (requires a restart):
+	- minikube config set memory 9001
+
+Browse the catalog of easily installed Kubernetes services:
+	- minikube addons list
+
+Create a second cluster running an older Kubernetes release:
+	- minikube start -p aged --kubernetes-version=v1.16.1
+
+Delete all of the minikube clusters:
+	- minikube delete --all
+	
+Delete the hello-minikube service: 
+	- kubectl delete services hello-minikube
+
+Delete the deployment:
+	- kubectl delete deployment hello-minikube
+ 
+====================================
+Refernce url : https://minikube.sigs.k8s.io/docs/start/?arch=%2Flinux%2Fx86-64%2Fstable%2Fbinary+download
+Kubernetes Concepts – https://kubernetes.io/docs/concepts/
+
+Pod Overview- https://kubernetes.io/docs/concepts/workloads/pods/pod-overview/
+
+====================================
+
+To run the pod: kubectl run nginx --image=nginx
+						[kubectl to_run pod_name(can be anything) image_name_present_at_dockerhub ]
+
+						
+To get the pod : kubectl get pods
+
+To get the information about the pod : kubectl describe pod nginx
+
+To get the status of the pod : kubectl get pods -o wide
+
+To create a pod using yaml file: kubectl create -f pod-definition.yml
+
+To delete a pod : kubectl delete pod my-pod
+
+Easy way to create a run a pod :
+	 - kubectl run redis --image=redis123 --dry-run=client -o yaml > redis.yaml
+	 
+
+*************************
+Kubernates Controllers
+*************************
+...................................
+Replication controller:
+....................................
+apiVersion: v1
+kind: ReplicationController
+metadata: 
+  name: myapp-rc
+  labels:
+    name: myapp
+	type: front-end
+spec:
+  - template:
+      metadata: 
+        name: nginx-2
+        labels:
+          app: myapp
+		  type: front-end
+      spec:
+        containers:
+        - name: nginx
+          image: nginx
+		  
+  - replicas: 3
+  
+To get the replication pods: kubectl get replicationController
+
+.................................
+Replica set
+................................
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata: 
+  name: myapp-replicaset
+  labels:
+    app: myapp
+    type: front-end
+spec:
+  template:
+      metadata: 
+        name: nginx
+        labels:
+         app: myapp
+         type: front-end
+      spec:
+        containers:
+        - name: nginx
+          image: nginx
+  replicas: 3
+  selector:
+       matchLabels:
+        app: myapp
+        type: front-end
+
+........................................
+example 2:
+
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: frontend
+  labels:
+    app: mywebsite
+    tier: frontend
+spec:
+  replicas: 4
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+  selector:
+    matchLabels:
+        app: myapp
+		
+
+		
+Note: all the lables should be same(pod/template and selector)
+
+To get the replication pods: kubectl get replicaSet
+
+To delete replicaSet: kubectl delete replicaset myapp-repliset[name]
+
+To describe replicaset : kubectl describe replicaset myapp-replicaset
+
+Scenario:
+1. If we have to update the replica to 6
+	- change -> replicas: 6
+	- run -> kubectl replace -f file.yml
+
+2. Sacle: run -> kubectl scale --replica=6 -f yaml_file/podname
+kubectl scale replicaset myapp-replicaset --replicas=1
+
+
+*************************
+Kubernates deployment
+*************************
+
+To see all the objects created at once : kubectl get all
+
+To get the deployements: kubectl get deployments
+
+To describe the deployments: kubectl describe deployment myapp-deployment
+
+example
+.............................................................
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: mywebsite
+    tier: frontend
+spec:
+  replicas: 4
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+  selector:
+    matchLabels:
+      app: myapp
+	
+.......................................................................
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: httpd-frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      name: httpd-frontend-pod
+  template:
+    metadata:
+      labels:
+        name: httpd-frontend-pod
+    spec:
+      containers:
+      - name: httpd-container
+        image: httpd:2.4-alpine
+		
+		
+....................................................
+Rollout and versioning in deployment
+......................................................
+To see the rollout status : kubectl rollout status deployment/myapp-deployment
+
+To see the revision and history: kubectl rollout history  deployment/myapp-deployment
+
+
+Deployment strategy:
+1. Recreate : destroy all the running instances and then deploy new instance [ application is down for some period]
+2. Rolling update: Take down the older version and bring up a newner version one by one [default]
+
+To update a deployment : kubectl apply -f deployemt_yaml_file
+or kubectl set image deployment/my-app-deployment nginx=nginx:1.9.1
+
+To rollout deployment: kubectl rollout undo deployement/myapp-deploy
+
+************************************
+Kubernetes Services
+***********************************
+
+Kubernetes services enable communication between various components within and outside of the application.
+Kubernetes Services helps to connect applications together with other applications or users.
+
+For example, An application has groups of parts running various sections, such as a group for serving
+a front end load to users and other group for running back end processes, and a third group connecting
+to an external data source. It is services that enable connectivity between these groups of parts.
+Services enable the front end application to be made available to end users. It helps communication between 
+back end and front end parts and helps in establishing connectivity to an external data source.
+Thus, services enable loose coupling between micro services in our application.
+
+Types of services:
+
+1. Node port:  where the service makes an internal port accessible on a port on the node.
+2. cluster IP: the service creates a virtual IP inside the cluster to enable communication between
+					different services, such as a set of frontend servers to a set of backend servers.
+3. Load balancer:  it provisions a load balancer for our application in supported cloud providers.
+	example : to distribute load across the different web servers in your front end tier.
+	
+Node port range: 30000-32767
+..............................................
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp
+    type: front-end
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30004
+
+To get the service : kubectl get svc
+
+.................................................
+Cluster Ip
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: myapp
+    type: front-end
+  type: ClusterIp
+  ports:
+    - port: 80
+      targetPort: 80
+	  
+...............................................
+Load balancer
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: LoadBalancer
+spec:
+  selector:
+    app: myapp
+    type: front-end
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      nodePort: 30004
+	  
+	  
+	  
+	  
+What next: Kubernetes for developers
+	  
+-------------------------------------------------------------------------------
+Kubernetes Update and Project Videos - Your Essential Guide
+Uncover additional insights through the videos listed below:
+
+Kubernetes Update Videos
+1. Kubernetes v1.27 Update
+https://www.youtube.com/watch?v=rUFgZuIp1mY
+
+2. Kubernetes v1.28 Update
+https://www.youtube.com/watch?v=mRlBtYc-HSk
+
+3. Kubernetes v1.29 Update
+https://www.youtube.com/watch?v=yCkQgKVwSVU
+
+
+Kubernetes Project Videos
+1. Special Interest Groups (SIGs) in Kubernetes
+https://www.youtube.com/watch?v=EoKuPoFXY-k&t=2s
+
+2. Kubernetes Enhancement Proposals (KEPs) Unveiled
+https://www.youtube.com/watch?v=B810TDzTQsQ

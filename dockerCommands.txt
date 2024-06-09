@@ -1,0 +1,157 @@
+To list the conatiner : docker ps
+
+To list all the stoped conatiner: docker ps -a
+
+To stop the conatiner : docker stop conatiner_id or conatiner_name
+
+To delete the conatiner : docker rm conatiner_id or conatiner_name  [To delete multiple container, seperate by a space and you can dlete by just specifying few words of conatiner_id ]
+
+To delete all the stoped conatiner : docker conatiner prune -f   		[Here -f specify the force]
+
+To list the docker image: docker images
+
+To delete the docker image: docker rmi image_name or image_id
+
+To run the docker image : docker run image_name or image_id
+
+To just pull the images and don't run : docker pull image_name
+
+To pull the specific version : docker pull nginx:1.4 			[it's called tag]
+
+To make changes on running conatiner : docker exec conatiner_id cat /etc/*release*
+
+By default the run command runs the conatiner in attach mode(foregroung). to run the image in background or detach mode specify -d option
+ex : docker run -d image_name or image_id
+
+When to run the image in background logs won't be visible. to see the logs
+ex: docker logs conatiner_id
+
+when we run the docker conatiner and terminate it. the data will be lost . to save the data specify -v 
+ex: docker run -v /opt/my-data:/var/lib/mysql mysql
+
+To expose a ip outside the docker host specify with -print
+ex: docker run -d -p 3360:3360 mysql
+
+You specify different port with same image
+docker run -d -p 8080:3360 mysql
+docker run -d -p 8000:3360 mysql
+docker run -d -p 8500:3360 mysql
+
+To get the ip of docker_host:  ifconfig | grep "inet " | grep -Fv 127.0.0.1 | awk '{print $2}'
+
+To build docker image from DOCKER file :  go the that path :docker build -t webapp-color .
+
+To inspect the env variable on running conatiner : docker inspect conatiner_id 
+
+In docker compose v3 it will automatically creates a network and images can talks with each other so we don't have to specify --link 
+
+To login into private registery: docker login private-registery.io
+
+To push local image to local registry:
+
+1. tag it with name : docker image tag my-image localhost:5000/my-image
+2 push it to local registry: docker push localhost:5000/my-image
+change it to ip if you are using different host
+
+
+ps -eaf : list all the process inside container 
+
+docker exec conatiner_id ps -eaf
+
+
+To specify docker build  other than DockerFile use -f option: docker build . -f DockerFile2 -t "app"
+
+To create a custom network : docker network create --driver=bridge --subnet=182.18.0.1/24 wp-mysql-network
+
+docker network create --driver=bridge --subnet=182.18.0.1/24 --gateway=182.18.0.1 wp-mysql-network
+
+To dlete a network : docker network rm wp-mysql-network
+
+
+docker run -p 8080:8080 -v /home/mohammeda/local-jenkins-data:/var/jenkins_home jenkins/jenkins
+docker run -d -v /home/mohammeda/local-jenkins-data:/var/jenkins_home -p 8080:8080 -p 50000:50000 --restart=on-failure jenkins/jenkins
+username - admin
+password- admin@123
+
+netstat -telnup
+
+netstat -ap grep | "27018"
+
+Jenkins PipeLine [
+
+
+pipeline {
+    agent any
+    stages {
+        stage("Clean Up") {
+            steps {
+                deleteDir()
+            }
+        }
+        stage("Clone Repo") {
+             steps {
+                sh "git clone https://github.com/jenkins-docs/simple-java-maven-app.git"
+             }
+        }
+        stage("build") {
+            steps {
+                dir("simple-java-maven-app") {
+                     sh "mvn clean install"
+                }
+            }
+        }
+        stage("test") {
+            steps {
+                 dir("simple-java-maven-app") {
+                                     sh "mvn test"
+               }
+            }
+        }
+    }
+}
+
+
+
+]
+
+
+
+
+
+
+
+
+
+
+
+Note:
+When you run the Docker run Ubuntu command, it runs an instance of Ubuntu image and exits immediately.
+Now, if you were to list the running containers, you wouldn't see the container running.
+If you list all containers, including those that are stopped, you will see that the new container that you ran is in an exited state.
+
+Now, why is that?
+
+Unlike virtual machines, containers are not meant to host an operating system.  Containers are meant to run a specific task or process, such as to host an instance of a web server
+or an application server or a database, or simply to carry out some kind of computation or analysis tasks. Once the task is complete, the container exits.
+A container only lifts as long as the process inside it is alive. If the web service inside the container is stopped or crashes, the container exits.
+
+
+We have just written some data into the database. To view the information we wrote, run the get-data.sh script available in the /root directory. How many customers data have been written to the database
+
+
+
+In case of Docker, we have the underlying hardware infrastructure, then the operating system and Docker installed on the OS.
+Docker can then manage the containers that run with libraries and dependencies alone.
+
+
+In case of a virtual machine, we have the OS on the underlying hardware, then the hypervisor like ESX or virtualization of some kind, and then the virtual machines.
+As you can see, each virtual machine has its own operating system inside it, then the dependencies and then the application.
+
+
+This overhead causes higher utilization of underlying resources, as there are multiple virtual operating systems and kernels, running the virtual machines also consume higher disk space, as each VM is heavy
+and is usually in gigabytes in size. Whereas Docker containers are lightweight and are usually in megabytes in size.
+This allows Docker containers to boot up faster, usually in a matter of seconds, whereas virtual machines,as we know, takes minutes to boot up as it needs to boot up the entire operating system.
+
+
+It is also important to note that Docker has less isolation as more resources are shared between containers like the kernel, whereas VMs have complete isolation from each other.
+Since VMs don't rely on the underlying operating system or kernel, you can have different types of operating systems, such as Linux based or windows based on the same hypervisor, whereas it is not possible on a single Docker host.
