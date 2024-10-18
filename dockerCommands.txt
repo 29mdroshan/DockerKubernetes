@@ -155,3 +155,7 @@ This allows Docker containers to boot up faster, usually in a matter of seconds,
 
 It is also important to note that Docker has less isolation as more resources are shared between containers like the kernel, whereas VMs have complete isolation from each other.
 Since VMs don't rely on the underlying operating system or kernel, you can have different types of operating systems, such as Linux based or windows based on the same hypervisor, whereas it is not possible on a single Docker host.
+
+
+
+docker run -v /home/mohammeda/local-jenkins:/var/jenkins_home -v /var/run/docker.sock:/var/run/docker.sock -p 7000:8080 -p 50000:50000 --network minikube --restart=on-failure jenkins/jenkins
